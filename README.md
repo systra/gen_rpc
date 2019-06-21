@@ -13,7 +13,7 @@
 
 To build this project you need to have the following:
 
-* **Erlang/OTP** >= 21.0
+* **Erlang/OTP** >= 19.1
 
 * **git** >= 1.7
 

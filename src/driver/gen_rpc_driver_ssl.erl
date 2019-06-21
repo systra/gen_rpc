@@ -66,9 +66,8 @@ listen(Port) when is_integer(Port) ->
 -spec accept(ssl:sslsocket()) -> {ok, ssl:sslsocket()} | {error, term()}.
 accept(Socket) when is_tuple(Socket) ->
     {ok, TSocket} = ssl:transport_accept(Socket, infinity),
-    case ssl:handshake(TSocket) of
-        {ok, SslSocket} ->
-            {ok, SslSocket};
+    case generic_ssl_accept(TSocket) of
+        {ok, SslSocket} -> {ok, SslSocket};
         Error -> Error
     end.
 
@@ -255,3 +254,21 @@ set_socket_keepalive({unix, linux}, Socket) ->
 
 set_socket_keepalive(_Unsupported, _Socket) ->
     ok.
+
+-ifdef(OTP_RELEASE).
+generic_ssl_accept(ClientSocket) ->
+    case ssl:handshake(ClientSocket) of
+        {ok, SslClientSocket} ->
+            {ok, SslClientSocket};
+        {error, Reason} ->
+            {error, Reason}
+    end.
+-else.
+generic_ssl_accept(ClientSocket) ->
+    case ssl:ssl_accept(ClientSocket) of
+        ok ->
+            {ok, ClientSocket};
+        {error, Reason} ->
+            {error, Reason}
+    end.
+-endif.

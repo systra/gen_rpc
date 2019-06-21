@@ -12,6 +12,14 @@
 %%% Behaviour
 -behaviour(gen_statem).
 
+-ifdef(OTP_RELEASE). %% this implies 21 or higher
+-define(EXCEPTION(Class, Reason, Stacktrace), Class:Reason:Stacktrace).
+-define(GET_STACK(Stacktrace), Stacktrace).
+-else.
+-define(EXCEPTION(Class, Reason, _), Class:Reason).
+-define(GET_STACK(_), erlang:get_stacktrace()).
+-endif.
+
 %%% Include the HUT library
 -include_lib("hut/include/hut.hrl").
 %%% Include this library's name macro
@@ -272,7 +280,8 @@ call_middleman(M, F, A) ->
           catch
                throw:Term -> Term;
                exit:Reason -> {badrpc, {'EXIT', Reason}};
-               error:Reason:Stacktrace -> {badrpc, {'EXIT', {Reason, Stacktrace}}}
+               ?EXCEPTION(error, Reason, Stacktrace) ->
+                  {badrpc, {'EXIT', {Reason, ?GET_STACK(Stacktrace)}}}
           end,
     erlang:exit({call_middleman_result, Res}),
     ok.
